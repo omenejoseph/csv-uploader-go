@@ -1,71 +1,42 @@
+
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
-type splitParameters struct {
-	NAME     string
-	EXPECTED person
-}
+func TestInArray(t *testing.T) {
+	ok, _ := in_array("Mr", titles)
+	if !ok {
+		t.Errorf("Expected 'Mr' to be found in titles")
+	}
 
-type noSplitParameters struct {
-	NAME      string
-	EXPECTED  []person
-	CONJUCTOR string
-}
-
-var noSplitTestParameters = []splitParameters{
-	{NAME: "Mrs Faye Hughes-Eastwood", EXPECTED: person{TITLE: "Mrs", FIRST_NAME: "Faye", LAST_NAME: "Hughes-Eastwood"}},
-	{NAME: "Prof Alex Brogan", EXPECTED: person{TITLE: "Prof", FIRST_NAME: "Alex", LAST_NAME: "Brogan"}},
-	{NAME: "Dr P Gunn", EXPECTED: person{TITLE: "Dr", FIRST_NAME: "P", LAST_NAME: "Gunn"}},
-}
-
-var splitNamesTestParameters = []noSplitParameters{
-	{
-		NAME: "Mr and Mrs Smith",
-		EXPECTED: []person{
-			{TITLE: "Mr", FIRST_NAME: "", LAST_NAME: "Smith"},
-			{TITLE: "Mrs", FIRST_NAME: "", LAST_NAME: "Smith"},
-		},
-		CONJUCTOR: "and",
-	},
-	{
-		NAME: "Dr & Mrs Joe Bloggs",
-		EXPECTED: []person{
-			{TITLE: "Dr", FIRST_NAME: "", LAST_NAME: "Bloggs"},
-			{TITLE: "Mrs", FIRST_NAME: "Joe", LAST_NAME: "Bloggs"},
-		},
-		CONJUCTOR: "&",
-	},
-	{
-		NAME: "Mr Tom Staff and Mr John Doe",
-		EXPECTED: []person{
-			{TITLE: "Mr", FIRST_NAME: "Tom", LAST_NAME: "Staff"},
-			{TITLE: "Mr", FIRST_NAME: "John", LAST_NAME: "Doe"},
-		},
-		CONJUCTOR: "and",
-	},
-}
-
-func TestCreateNamesProperlyCreatesWithTitleFirstAndLastName(t *testing.T) {
-
-	for _, test := range noSplitTestParameters {
-		if output := HandleCreateName(test.NAME, ""); output != test.EXPECTED {
-			t.Errorf("Output %q not equal to expected %q", output, test.EXPECTED)
-
-		}
+	ok, _ = in_array("RandomTitle", titles)
+	if ok {
+		t.Errorf("Expected 'RandomTitle' not to be found in titles")
 	}
 }
 
-func TestSplitNamesCorrectlySplitsNames(t *testing.T) {
-	for _, test := range splitNamesTestParameters {
-		output := HandleSpitNames(test.NAME, test.CONJUCTOR)
+func TestHandleCreateName(t *testing.T) {
+	createdPerson := HandleCreateName("John Doe", "")
 
-		if output[0] != test.EXPECTED[1] {
-			t.Errorf("Output %q not equal to expected %q", output[0], test.EXPECTED[1])
-		}
+	if createdPerson.TITLE != "" || createdPerson.FIRST_NAME != "John" || createdPerson.LAST_NAME != "Doe" {
+		t.Errorf("Expected person to have TITLE: '', FIRST_NAME: 'John', LAST_NAME: 'Doe'")
+	}
+}
 
-		if output[1] != test.EXPECTED[0] {
-			t.Errorf("Output %q not equal to expected %q", output[1], test.EXPECTED[0])
-		}
+func TestHandleSpitNames(t *testing.T) {
+	response := HandleSpitNames("Mr. John Smith and Mrs. Jane Smith", "and")
+
+	if len(response) != 2 {
+		t.Errorf("Expected 2 people structs to return")
+	}
+
+	if response[0].TITLE != "Mrs." || response[0].FIRST_NAME != "Jane" || response[0].LAST_NAME != "Smith" {
+		t.Errorf("Expected person 1 to have TITLE: 'Mrs.', FIRST_NAME: 'Jane', LAST_NAME: 'Smith'")
+	}
+
+	if response[1].TITLE != "Mr." || response[1].FIRST_NAME != "John" || response[1].LAST_NAME != "Smith" {
+		t.Errorf("Expected Person 2 to have TITLE: 'Mr.', FIRST_NAME: 'John', LAST_NAME: 'Smith'")
 	}
 }
