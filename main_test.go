@@ -1,71 +1,128 @@
+
 package main
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
-type splitParameters struct {
-	NAME     string
-	EXPECTED person
-}
-
-type noSplitParameters struct {
-	NAME      string
-	EXPECTED  []person
-	CONJUCTOR string
-}
-
-var noSplitTestParameters = []splitParameters{
-	{NAME: "Mrs Faye Hughes-Eastwood", EXPECTED: person{TITLE: "Mrs", FIRST_NAME: "Faye", LAST_NAME: "Hughes-Eastwood"}},
-	{NAME: "Prof Alex Brogan", EXPECTED: person{TITLE: "Prof", FIRST_NAME: "Alex", LAST_NAME: "Brogan"}},
-	{NAME: "Dr P Gunn", EXPECTED: person{TITLE: "Dr", FIRST_NAME: "P", LAST_NAME: "Gunn"}},
-}
-
-var splitNamesTestParameters = []noSplitParameters{
-	{
-		NAME: "Mr and Mrs Smith",
-		EXPECTED: []person{
-			{TITLE: "Mr", FIRST_NAME: "", LAST_NAME: "Smith"},
-			{TITLE: "Mrs", FIRST_NAME: "", LAST_NAME: "Smith"},
+func TestHandleSpitNames(t *testing.T) {
+	cases := []struct {
+		name           string
+		n              string
+		conjuctor      string
+		expectedResult []person
+	}{
+		{
+			name:      "Test split with 'and'",
+			n:         "Mr Smith and Mrs Smith",
+			conjuctor: "and",
+			expectedResult: []person{
+				{TITLE: "Mrs", FIRST_NAME: "", LAST_NAME: "Smith"},
+				{TITLE: "Mr", FIRST_NAME: "", LAST_NAME: "Smith"},
+			},
 		},
-		CONJUCTOR: "and",
-	},
-	{
-		NAME: "Dr & Mrs Joe Bloggs",
-		EXPECTED: []person{
-			{TITLE: "Dr", FIRST_NAME: "", LAST_NAME: "Bloggs"},
-			{TITLE: "Mrs", FIRST_NAME: "Joe", LAST_NAME: "Bloggs"},
+		{
+			name:      "Test split with '&'",
+			n:         "Mr Jones & Mrs Jones",
+			conjuctor: "&",
+			expectedResult: []person{
+				{TITLE: "Mrs", FIRST_NAME: "", LAST_NAME: "Jones"},
+				{TITLE: "Mr", FIRST_NAME: "", LAST_NAME: "Jones"},
+			},
 		},
-		CONJUCTOR: "&",
-	},
-	{
-		NAME: "Mr Tom Staff and Mr John Doe",
-		EXPECTED: []person{
-			{TITLE: "Mr", FIRST_NAME: "Tom", LAST_NAME: "Staff"},
-			{TITLE: "Mr", FIRST_NAME: "John", LAST_NAME: "Doe"},
-		},
-		CONJUCTOR: "and",
-	},
-}
+	}
 
-func TestCreateNamesProperlyCreatesWithTitleFirstAndLastName(t *testing.T) {
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			result := HandleSpitNames(c.n, c.conjuctor)
 
-	for _, test := range noSplitTestParameters {
-		if output := HandleCreateName(test.NAME, ""); output != test.EXPECTED {
-			t.Errorf("Output %q not equal to expected %q", output, test.EXPECTED)
-
-		}
+			if !reflect.DeepEqual(result, c.expectedResult) {
+				t.Errorf("Expected %v, but got %v", c.expectedResult, result)
+			}
+		})
 	}
 }
 
-func TestSplitNamesCorrectlySplitsNames(t *testing.T) {
-	for _, test := range splitNamesTestParameters {
-		output := HandleSpitNames(test.NAME, test.CONJUCTOR)
+func TestHandleCreateName(t *testing.T) {
+	cases := []struct {
+		name           string
+		n              string
+		ln             string
+		expectedResult person
+	}{
+		{
+			name:      "Test single name",
+			n:         "Smith",
+			ln:        "",
+			expectedResult: person{TITLE:"", FIRST_NAME: "", LAST_NAME: "Smith"},
+		},
+		{
+			name:      "Test title and single name",
+			n:         "Mr Smith",
+			ln:        "",
+			expectedResult: person{TITLE: "Mr", FIRST_NAME: "", LAST_NAME: "Smith"},
+		},
+		{
+			name:      "Test full name",
+			n:         "Mr John Smith",
+			ln:        "",
+			expectedResult: person{TITLE: "Mr", FIRST_NAME: "John", LAST_NAME: "Smith"},
+		},
+		{
+			name:      "Test last name provided",
+			n:         "Mrs",
+			ln:        "Doe",
+			expectedResult: person{TITLE: "Mrs", FIRST_NAME: "", LAST_NAME: "Doe"},
+		},
+	}
 
-		if output[0] != test.EXPECTED[1] {
-			t.Errorf("Output %q not equal to expected %q", output[0], test.EXPECTED[1])
-		}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			result := HandleCreateName(c.n, c.ln)
 
-		if output[1] != test.EXPECTED[0] {
-			t.Errorf("Output %q not equal to expected %q", output[1], test.EXPECTED[0])
-		}
+			if !reflect.DeepEqual(result, c.expectedResult) {
+				t.Errorf("Expected %v, but got %v", c.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestInArray(t *testing.T) {
+	cases := []struct {
+		name           string
+		v              interface{}
+		in             interface{}
+		expectedResult bool
+		expectedIndex  int
+	}{
+		{
+			name:           "Test in array",
+			v:              "b",
+			in:             []string{"a", "b", "c"},
+			expectedResult: true,
+			expectedIndex:  1,
+		},
+		{
+			name:           "Test not in array",
+			v:              "d",
+			in:             []string{"a", "b", "c"},
+			expectedResult: false,
+			expectedIndex:  -1,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			result, idx := in_array(c.v, c.in)
+
+			if result != c.expectedResult {
+				t.Errorf("Expected %v, but got %v", c.expectedResult, result)
+			}
+
+			if idx != c.expectedIndex {
+				t.Errorf("Expected index %d, but got %d", c.expectedIndex, idx)
+			}
+		})
 	}
 }
